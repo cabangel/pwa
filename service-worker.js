@@ -24,7 +24,8 @@ var URLSTOCACHE = [
     './img/favicon-96.png',
     './img/favicon-64.png',
     './img/favicon-32.png',
-    './img/favicon-16.png'
+    './img/favicon-16.png',
+    './img/favicon.png'
 ];
 
 //Evento install
@@ -68,10 +69,12 @@ self.addEventListener('activate', e => {
 
 
 //Evento fetch
+/*
 self.addEventListener('fetch', e => {
     e.respondWith(
         caches.match(e.request)
         .then(res => {
+        
             if (res) {
                 //devuelvo datos desde cache
                 return res;
@@ -80,4 +83,30 @@ self.addEventListener('fetch', e => {
             return fetch(e.request);
         })
     );
-});
+});*/
+
+addEventListener('fetch', function(event) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(function(response) {
+          if (response) {
+            return response;     // if valid response is found in cache return it
+          } else {
+            return fetch(event.request)     //fetch from internet
+              .then(function(res) {
+                return caches.open(CACHE_NAME)
+                  .then(function(cache) {
+                    cache.put(event.request.url, res.clone());    //save the response for future
+                    return res;   // return the fetched data
+                  })
+              })
+              .catch(function(err) {       // fallback mechanism
+                return caches.open(CACHE_NAME)
+                  .then(function(cache) {
+                    return cache.match('/offline.html');
+                  });
+              });
+          }
+        })
+    );
+  });          
